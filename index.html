@@ -87,3 +87,58 @@
     });
 
     // Upload file
+    document.getElementById('uploadButton').addEventListener('click', () => {
+         const file = document.getElementById('fileInput').files[0];
+         if (file) {
+           const storageRef = storage.ref('files/' + file.name);
+           storageRef.put(file).then(snapshot => {
+             storageRef.getDownloadURL().then(url => {
+               db.collection('files').add({
+                 name: file.name,
+                 url: url
+               }).then(() => {
+                 alert('File uploaded successfully!');
+                 loadFiles();
+               }).catch(error => {
+                 alert('Error: ' + error.message);
+               });
+             }).catch(error => {
+               alert('Error: ' + error.message);
+             });
+           }).catch(error => {
+             alert('Error: ' + error.message);
+           });
+         } else {
+           alert('No file selected');
+         }
+       });
+
+       function loadFiles() {
+         db.collection('files').get().then(querySnapshot => {
+           const fileList = document.getElementById('fileList');
+           fileList.innerHTML = '';
+           querySnapshot.forEach(doc => {
+             const file = doc.data();
+             const fileItem = document.createElement('div');
+             fileItem.innerHTML = `<a href="${file.url}" target="_blank">${file.name}</a>`;
+             fileList.appendChild(fileItem);
+           });
+         }).catch(error => {
+           alert('Error: ' + error.message);
+         });
+       }
+
+       // Listen for auth state changes
+       auth.onAuthStateChanged(user => {
+         if (user) {
+           document.getElementById('auth-section').style.display = 'none';
+           document.getElementById('content-section').style.display = 'block';
+           loadFiles();
+         } else {
+           document.getElementById('auth-section').style.display = 'block';
+           document.getElementById('content-section').style.display = 'none';
+         }
+       });
+     </script>
+   </body>
+   </html>
