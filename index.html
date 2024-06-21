@@ -1,12 +1,69 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My GitHub Page</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>File Database Website</title>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-storage.js"></script>
 </head>
 <body>
-    <h1>Welcome to My GitHub Page!</h1>
-    <p>This is my awesome website hosted with GitHub Pages.</p>
+  <h1>File Database Website</h1>
+  <input type="file" id="fileInput" />
+  <button id="uploadButton">Upload File</button>
+  <div id="fileList"></div>
+
+  <script>
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+
+    // Initialize Firestore and Storage
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+
+    document.getElementById('uploadButton').addEventListener('click', () => {
+      const file = document.getElementById('fileInput').files[0];
+      if (file) {
+        const storageRef = storage.ref('files/' + file.name);
+        storageRef.put(file).then(snapshot => {
+          storageRef.getDownloadURL().then(url => {
+            db.collection('files').add({
+              name: file.name,
+              url: url
+            }).then(() => {
+              alert('File uploaded successfully!');
+              loadFiles();
+            });
+          });
+        });
+      }
+    });
+
+    function loadFiles() {
+      db.collection('files').get().then(querySnapshot => {
+        const fileList = document.getElementById('fileList');
+        fileList.innerHTML = '';
+        querySnapshot.forEach(doc => {
+          const file = doc.data();
+          const fileItem = document.createElement('div');
+          fileItem.innerHTML = `<a href="${file.url}" target="_blank">${file.name}</a>`;
+          fileList.appendChild(fileItem);
+        });
+      });
+    }
+
+    // Load files on page load
+    window.onload = loadFiles;
+  </script>
 </body>
 </html>
